@@ -32,10 +32,6 @@ var intents = new builder.IntentDialog({recognizers:[recognizer]});
 
 bot.recognizer(recognizer);
 
-bot.dialog('/', function (session){
-    session.send("Hello World");
-});
-
 bot.dialog('start', function(session){
     session.send("Hi there!");
     session.beginDialog('rootMenu');
