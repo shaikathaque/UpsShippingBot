@@ -55,10 +55,31 @@ bot.dialog('help', function(session){
                     // ])
                     // .tap(builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Space_Needle"))
                     .buttons([
-                        builder.CardAction.imBack(session,'select', "select")])
+                        builder.CardAction.imBack(session,'shipment', "select")])
                         
             ]);
     
     session.send(msg);
     // return createThumbnailCard(session);
 }).triggerAction({matches: /^help/i})
+
+
+bot.dialog('shipment', [function(session, results){
+builder.Prompts.text(session, prompts.shipToMessage);
+},
+function (session, results, next){
+if (results.response){
+    var location = results.response;
+    builder.Prompts.choice(session, "Great. What shipping speed would you like?", '2 Day Delivery|Ground Shipping|Cancel',{listStyle:3});    
+
+}
+else{
+    next();
+}
+
+}
+]).triggerAction({matches: /^shipment/i})
+
+
+
+
