@@ -1,3 +1,3 @@
 module.exports= {
-    helpMessage: 'I can help ship a package. You can choose pick up or dropoff'
+    helpMessage: 'I am here to help you schedule a shipment. You can choose to have the package picked up at a specific location or you can drop it off to a nearby store. Please select one of the options below.'
 }
