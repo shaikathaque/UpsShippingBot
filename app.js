@@ -1,7 +1,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var prompts = require('./prompts');
-
+var locationDialog = require('botbuilder-location');
 //=========================================================
 // Bot Setup
 //=========================================================
@@ -29,6 +29,8 @@ server.post('/api/messages', connector.listen());
 var model = process.env.model;
 var recognizer = new builder.LuisRecognizer('');
 var intents = new builder.IntentDialog({recognizers:[recognizer]});
+
+bot.library(locationDialog.createLibrary("Ak2VZoOri8R263-z_IAqqGRcG55S3S5q71H9lSkCsU-1gjnHD1KRUkbeI-zLPp5O"));
 
 bot.recognizer(recognizer);
 
@@ -62,3 +64,48 @@ bot.dialog('help', function(session){
     session.send(msg);
     // return createThumbnailCard(session);
 }).triggerAction({matches: /^help/i})
+
+bot.dialog('dropoff', [
+    function(session){
+    builder.Prompts.choice(session,'Would you like to use current location ?', 'Yes|No',{listStyle:3});
+    },
+function(session, results) {
+        switch (results.response.index) {
+            case 0:
+                session.beginDialog('findlocation');
+                break;
+            case 1:
+                session.beginDialog('customlocation');
+                break;
+            default:
+                session.endDialog();
+                break;
+        }
+}]).triggerAction({matches: /^dropoff/i})
+
+bot.dialog('customlocation', [function(session){
+    locationDialog.getLocation(session, {
+            prompt: "Where should I ship your order?",
+            useNativeControl: true,
+            reverseGeocode: true,
+            requiredFields:
+                locationDialog.LocationRequiredFields.streetAddress |
+                locationDialog.LocationRequiredFields.locality |
+                locationDialog.LocationRequiredFields.region |
+                locationDialog.LocationRequiredFields.postalCode |
+                locationDialog.LocationRequiredFields.country
+        });
+
+        locationDialog.getLocation(session, options);
+},
+function (session, results) {
+        if (results.response) {
+            var place = results.response;
+            session.send(place.streetAddress + ", " + place.locality + ", " + place.region + ", " + place.country + " (" + place.postalCode + ")");
+        }
+    }
+]).triggerAction({matches: /^customlocation/i})
+
+bot.dialog('findlocation', function(session){
+    session.send("Fetching your location");
+}).triggerAction({matches: /^findlocation/i})
