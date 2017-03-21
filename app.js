@@ -43,7 +43,7 @@ bot.dialog('start', function(session){
 
 bot.dialog('rootMenu', [
     function (session) {
-        builder.Prompts.choice(session, "Choose an option:", 'Pickup|Dropoff|Quit',{listStyle:3});
+        builder.Prompts.choice(session, "Choose an option:", 'Pickup|Dropoff at UPS|Quit',{listStyle:3});
     },
     function (session, results) {
         switch (results.response.index) {
