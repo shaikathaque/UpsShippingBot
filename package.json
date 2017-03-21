@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/harshil1793/UpsShippingBot/issues"
   },
-  "homepage": "https://github.com/harshil1793/UpsShippingBot#readme"
+  "homepage": "https://github.com/harshil1793/UpsShippingBot#readme",
+  "dependencies": {
+    "botbuilder": "^3.7.0",
+    "restify": "^4.3.0"
+  }
 }
