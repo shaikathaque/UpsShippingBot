@@ -70,13 +70,24 @@ bot.dialog('pickup', [
         builder.Prompts.text(session, prompts.pickupAddressMessage);
     },
     function (session, result) {
-        session.conversationData.pickupAddress = result.response;
-        session.send('Your address is: ' + session.conversationData.pickupAddress);
-        builder.Prompts.text(session, prompts.pickupTimeMessage);
+        if (validateAddress(result.response)) {
+            session.conversationData.pickupAddress = result.response;
+            session.send('Your address is: ' + session.conversationData.pickupAddress);
+            builder.Prompts.time(session, prompts.pickupTimeMessage);
+        } else {
+            session.send('Your address is not valid. Please try again');
+            session.beginDialog('pickup');
+        }
     },
     function (session, result) {
-        session.conversationData.pickupTime = result.response;
+        session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
         session.send('Your pickup time is: ' + session.conversationData.pickupTime);
     }
 ]).triggerAction({matches: /^pickup/i});
 
+function validateAddress(string) {
+    if (isNaN(string.split(' ')[0])) {
+        return false;
+    }
+    return true;
+}
