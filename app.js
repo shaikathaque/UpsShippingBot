@@ -62,3 +62,21 @@ bot.dialog('help', function(session){
     session.send(msg);
     // return createThumbnailCard(session);
 }).triggerAction({matches: /^help/i})
+
+
+//pickup dialog
+bot.dialog('pickup', [
+    function (session) {
+        builder.Prompts.text(session, prompts.pickupAddressMessage);
+    },
+    function (session, result) {
+        session.conversationData.pickupAddress = result.response;
+        session.send('Your address is: ' + session.conversationData.pickupAddress);
+        builder.Prompts.text(session, prompts.pickupTimeMessage);
+    },
+    function (session, result) {
+        session.conversationData.pickupTime = result.response;
+        session.send('Your pickup time is: ' + session.conversationData.pickupTime);
+    }
+]).triggerAction({matches: /^pickup/i});
+
