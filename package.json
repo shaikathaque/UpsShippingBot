@@ -1,0 +1,19 @@
+{
+  "name": "upsshippingbot",
+  "version": "1.0.0",
+  "description": "Demo bot for shipping packages.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harshil1793/UpsShippingBot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/harshil1793/UpsShippingBot/issues"
+  },
+  "homepage": "https://github.com/harshil1793/UpsShippingBot#readme"
+}
