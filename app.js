@@ -83,9 +83,25 @@ bot.dialog('help', [
     }
 }]).triggerAction({matches: /^help/i});
 
-bot.dialog('pickup', function(session){
-    session.send("HERE");
-}).triggerAction({matches : /^pickup/i});
+bot.dialog('pickup', [
+    function (session) {
+        builder.Prompts.text(session, prompts.pickupAddressMessage);
+    },
+    function (session, result) {
+        if (validateAddress(result.response)) {
+            session.conversationData.pickupAddress = result.response;
+            session.send('Your address is: ' + session.conversationData.pickupAddress);
+            builder.Prompts.time(session, prompts.pickupTimeMessage);
+        } else {
+            session.send('Your address is not valid. Please try again');
+            session.beginDialog('pickup');
+        }
+    },
+    function (session, result) {
+        session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
+        session.send('Your pickup time is: ' + session.conversationData.pickupTime);
+    }
+]).triggerAction({matches: /^pickup/i});
 
 bot.dialog('quit', function(session){
     session.endConversation("Have a nice day.")
@@ -152,25 +168,7 @@ bot.dialog('GroundShipping', [function(session, resutlts){
     " to " + session.privateConversationData[LocationKey]);
 }]).triggerAction({matches: /^Ground Shipping/i});
 
-bot.dialog('pickup', [
-    function (session) {
-        builder.Prompts.text(session, prompts.pickupAddressMessage);
-    },
-    function (session, result) {
-        if (validateAddress(result.response)) {
-            session.conversationData.pickupAddress = result.response;
-            session.send('Your address is: ' + session.conversationData.pickupAddress);
-            builder.Prompts.time(session, prompts.pickupTimeMessage);
-        } else {
-            session.send('Your address is not valid. Please try again');
-            session.beginDialog('pickup');
-        }
-    },
-    function (session, result) {
-        session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
-        session.send('Your pickup time is: ' + session.conversationData.pickupTime);
-    }
-]).triggerAction({matches: /^pickup/i});
+
 
 function validateAddress(string) {
     if (isNaN(string.split(' ')[0])) {
