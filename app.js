@@ -125,4 +125,3 @@ bot.dialog('findlocation', [
         }
     }
 ]).triggerAction({matches: /^findlocation/i})
-
