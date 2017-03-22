@@ -151,3 +151,30 @@ bot.dialog('GroundShipping', [function(session, resutlts){
     session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
     " to " + session.privateConversationData[LocationKey]);
 }]).triggerAction({matches: /^Ground Shipping/i});
+
+bot.dialog('pickup', [
+    function (session) {
+        builder.Prompts.text(session, prompts.pickupAddressMessage);
+    },
+    function (session, result) {
+        if (validateAddress(result.response)) {
+            session.conversationData.pickupAddress = result.response;
+            session.send('Your address is: ' + session.conversationData.pickupAddress);
+            builder.Prompts.time(session, prompts.pickupTimeMessage);
+        } else {
+            session.send('Your address is not valid. Please try again');
+            session.beginDialog('pickup');
+        }
+    },
+    function (session, result) {
+        session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
+        session.send('Your pickup time is: ' + session.conversationData.pickupTime);
+    }
+]).triggerAction({matches: /^pickup/i});
+
+function validateAddress(string) {
+    if (isNaN(string.split(' ')[0])) {
+        return false;
+    }
+    return true;
+}
