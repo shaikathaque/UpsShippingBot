@@ -65,7 +65,6 @@ bot.dialog('help', function(session){
     // return createThumbnailCard(session);
 }).triggerAction({matches: /^help/i})
 
-
 // takes user address and find nearest location
 bot.dialog('dropoff', [function(session){
     locationDialog.getLocation(session, {
