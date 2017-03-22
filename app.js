@@ -30,6 +30,8 @@ server.post('/api/messages', connector.listen());
 var model = process.env.model;
 var recognizer = new builder.LuisRecognizer('');
 var intents = new builder.IntentDialog({recognizers:[recognizer]});
+var LocationKey = "DefaultLocation";
+var ShippingStyleKey = "Shipping Style";
 
 bot.recognizer(recognizer);
 
@@ -112,17 +114,43 @@ bot.dialog('shipment', [function(session, results){
 builder.Prompts.text(session, prompts.shipToMessage);
 },
 function (session, results, next){
-if (results.response){
-    var location = results.response;
-    builder.Prompts.choice(session, "Great. What shipping speed would you like?", '2 Day Delivery|Ground Shipping|Cancel',{listStyle:3});    
 
-}
-else{
-    next();
-}
+    session.privateConversationData[LocationKey] = results.response
+    session.send('You said your location is ' + session.privateConversationData[LocationKey]);
 
-}
-]).triggerAction({matches: /^shipment/i})
+    builder.Prompts.choice(session, "Great. What shipping speed would you like?", '2 Day Delivery|Ground Shipping|Cancel',{listStyle:3});
+        switch (results.response.index) {
+                case 0:
+                    session.beginDialog('2DayShipping');
+                    break;
+                case 1:
+                    session.beginDialog('Ground Shipping');
+                    break;
+                case 2:
+                    session.beginDialog('quit');
+                    break;
+                default:
+                    session.endDialog();
+                    break;
+}}]).triggerAction({matches: /^shipment/i})
+
+bot.dialog('2DayShipping', [function(session, resutlts){
+    session.privateConversationData[ShippingStyleKey] = '2DayShipping';
+    session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
+    " to " + session.privateConversationData[LocationKey]);
+
+
+
+}]).triggerAction({matches: /^2 Day Delivery/i})
+
+
+bot.dialog('GroundShipping', [function(session, resutlts){
+    session.privateConversationData[ShippingStyleKey] = 'GroundShipping';
+    session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
+    " to " + session.privateConversationData[LocationKey]);
+
+
+}]).triggerAction({matches: /^Ground Shipping/i})
  
 
 jsonObject = JSON.stringify({
@@ -165,3 +193,4 @@ client.post("https://onlinetools.ups.com/rest/Locator", args, function (data, re
     // parsed response body as js object 
     console.log(data.LocatorResponse.SearchResults.DropLocation[0].AddressKeyFormat.AddressLine);
 });
+
