@@ -97,9 +97,17 @@ bot.dialog('pickup', [
             session.beginDialog('pickup');
         }
     },
-    function (session, result) {
+    function (session, result, next) { 
         session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
         session.send('Your pickup time is: ' + session.conversationData.pickupTime);
+        builder.Prompts.text(session, 'Would you like to continue with your shipment?');
+    },
+    function (session, result) {
+        if (result.response === 'yes') {
+            session.beginDialog('shipment');
+        } else {
+            session.send('pickup')
+        }
     }
 ]).triggerAction({matches: /^pickup/i});
 
@@ -167,8 +175,6 @@ bot.dialog('GroundShipping', [function(session, resutlts){
     session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
     " to " + session.privateConversationData[LocationKey]);
 }]).triggerAction({matches: /^Ground Shipping/i});
-
-
 
 function validateAddress(string) {
     if (isNaN(string.split(' ')[0])) {
