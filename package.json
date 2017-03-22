@@ -17,9 +17,9 @@
   },
   "homepage": "https://github.com/harshil1793/UpsShippingBot#readme",
   "dependencies": {
+    "async": "^2.1.5",
     "botbuilder": "^3.7.0",
     "botbuilder-location": "^1.1.0",
-    "https": "^1.0.0",
     "node-rest-client": "^3.0.7",
     "restify": "^4.3.0"
   }
