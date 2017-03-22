@@ -1,6 +1,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var prompts = require('./prompts');
+var locationDialog = require('botbuilder-location')
 
 //=========================================================
 // Bot Setup
@@ -14,10 +15,10 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
   
 // Create chat bot
 var connector = new builder.ChatConnector({
-    appId: process.env.MICROSOFT_APP_ID,
-    // appId: null,
-    // appPassword: null
-    appPassword: process.env.MICROSOFT_APP_PASSWORD
+    // appId: process.env.MICROSOFT_APP_ID,
+    appId: null,
+    appPassword: null
+    // appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
@@ -122,3 +123,45 @@ else{
 
 }
 ]).triggerAction({matches: /^shipment/i})
+ 
+
+jsonObject = JSON.stringify({
+    "AccessRequest": {
+                        "AccessLicenseNumber": "AD245999B2916A98", "UserId": "shaikathaque4",
+                        "Password": "UPSbot123!"
+                    },
+        "LocatorRequest": {
+                        "Request": {
+                        "RequestAction": "Locator", "RequestOption": "1", "TransactionReference": {
+                        "CustomerContext": "Find nearest UPS location" }
+                    }, 
+                    "OriginAddress": {
+                        "PhoneNumber": "1234567891", "AddressKeyFormat": {
+                        "AddressLine": "11 Times Square", "PoliticalDivision2": "New York City", "PoliticalDivision1": "NY", "PostcodePrimaryLow": "10036", "PostcodeExtendedLow": "", "CountryCode": "US"
+                        } },
+	                "Translate": { "Locale": "en_US"},
+                    "UnitOfMeasurement": {
+                        "Code": "MI" },
+                        "LocationSearchCriteria": { 
+                            "SearchOption": {
+                                "OptionType": { "Code": "01"},
+                                "OptionCode": {
+                                "Code": "002" }
+                            },
+                            "MaximumListSize": "5", "SearchRadius": "5"}
+        }
+});
+
+var Client = require('node-rest-client').Client;
+ 
+var client = new Client();
+
+var args = {
+    data : jsonObject,
+    headers: {"Content-Type": "application/json"}
+}
+
+client.post("https://onlinetools.ups.com/rest/Locator", args, function (data, response) {
+    // parsed response body as js object 
+    console.log(data.LocatorResponse.SearchResults.DropLocation[0].AddressKeyFormat.AddressLine);
+});
