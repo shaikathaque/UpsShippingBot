@@ -240,7 +240,6 @@ bot.dialog('dropoff', [function(session){
                             }
 ]).triggerAction({matches: /^dropoff/i});
 
-
 bot.dialog('quit', function(session){
     session.endConversation("Have a nice day.")
 }).triggerAction({matches: /^quit/i});
@@ -257,6 +256,20 @@ bot.dialog('GroundShipping', [function(session, resutlts){
     " to " + session.privateConversationData[LocationKey]);                   
      session.beginDialog('reship');
 }]).triggerAction({matches: /^Ground Shipping/i});
+
+bot.dialog('printlabel', function(session){
+    var picture = new builder.Message(session)
+            .textFormat(builder.TextFormat.xml)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("UPS")
+                    .subtitle("Shipping Label")
+                    .images([
+                        builder.CardImage.create(session, "http://www.cuspdental.com/img/UPSLabel.jpg")
+                    ])
+            ]);
+    session.send(picture);
+}).triggerAction({matches: /^printlabel/i})
 
 bot.dialog('reship', [
     function(session, results){
