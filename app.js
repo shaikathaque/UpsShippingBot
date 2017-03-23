@@ -329,7 +329,7 @@ function createLabel(session){
 
 bot.dialog('reship', [
     function(session){
-        builder.Prompts.choice(session, 'Restart?', 'Yes|No', {listStyle:3})
+        builder.Prompts.choice(session, 'Would you like to place another order?', 'Yes|No', {listStyle:3})
     },
     function (session, results) {
             switch (results.response.index) {
