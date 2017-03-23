@@ -46,10 +46,10 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
   
 // Create chat bot
 var connector = new builder.ChatConnector({
-    appId: process.env.MICROSOFT_APP_ID,
-    // appId: null,
-    // appPassword: null
-    appPassword: process.env.MICROSOFT_APP_PASSWORD
+    // appId: process.env.MICROSOFT_APP_ID,
+    appId: null,
+    appPassword: null
+    // appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
@@ -236,55 +236,6 @@ bot.dialog('dropoff', [function(session){
 bot.dialog('quit', function(session){
     session.endConversation("Have a nice day.")
 }).triggerAction({matches: /^quit/i});
-
-// takes user address and find nearest location
-bot.dialog('dropoff', [function(session){
-    locationDialog.getLocation(session, {
-            prompt: "Enter your address",
-            useNativeControl: true,
-            reverseGeocode: true,
-            requiredFields:
-                locationDialog.LocationRequiredFields.streetAddress |
-                locationDialog.LocationRequiredFields.locality |
-                locationDialog.LocationRequiredFields.region |
-                locationDialog.LocationRequiredFields.postalCode |
-                locationDialog.LocationRequiredFields.country
-        });
-
-        locationDialog.getLocation(session, options);
-        },
-        function (session, results) {
-                if (results.response) {
-                    var place = results.response;
-                    session.send(place.streetAddress + ", " + place.locality + ", " + place.region + ", " + place.country + " (" + place.postalCode + ")");
-                }
-            }
-]).triggerAction({matches: /^dropoff/i});
-
-bot.dialog('shipment', [
-    function(session, results){
-        builder.Prompts.text(session, prompts.shipToMessage);
-    },
-    function (session, results, next){
-
-        session.privateConversationData[LocationKey] = results.response
-        session.send('You said your location is ' + session.privateConversationData[LocationKey]);
-
-        builder.Prompts.choice(session, "Great. What shipping speed would you like?", '2 Day Delivery|Ground Shipping|Cancel',{listStyle:3});
-        switch (results.response.index) {
-                case 0:
-                    session.beginDialog('2DayShipping');
-                    break;
-                case 1:
-                    session.beginDialog('Ground Shipping');
-                    break;
-                case 2:
-                    session.beginDialog('quit');
-                    break;
-                default:
-                    session.endDialog();
-                    break;
-}}]).triggerAction({matches: /^shipment/i});
 
 bot.dialog('2DayShipping', [function(session, resutlts){
     session.privateConversationData[ShippingStyleKey] = '2DayShipping';
