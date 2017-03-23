@@ -232,7 +232,6 @@ bot.dialog('dropoff', [function(session){
                             }
 ]).triggerAction({matches: /^dropoff/i});
 
-
 bot.dialog('quit', function(session){
     session.endConversation("Have a nice day.")
 }).triggerAction({matches: /^quit/i});
