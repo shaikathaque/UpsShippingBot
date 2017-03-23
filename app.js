@@ -278,7 +278,7 @@ bot.dialog('reship', [
     function (session, results) {
             switch (results.response.index) {
                 case 0:
-                moveDialog("shipment", session);
+                moveDialog("help", session);
                     break;
                 case 1:
                     session.endDialog();                    
