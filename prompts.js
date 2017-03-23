@@ -5,5 +5,5 @@ module.exports= {
     shipmentSpeedMessage: 'Please choose a shippgit braning speed',
     shipmentSizeMessage: 'Please enter the size of the package',
     pickupAddressMessage: 'Where will we pick up your package from?',
-    pickupTimeMessage: 'What time do you want your package to be picked up?'
+    pickupTimeMessage: 'What time do you want your package to be picked up?',
 }
