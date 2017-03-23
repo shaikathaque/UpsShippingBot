@@ -117,12 +117,16 @@ bot.dialog('2DayShipping', [function(session, resutlts){
     session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
     " to " + session.privateConversationData[LocationKey]);
 
+
+
 }]).triggerAction({matches: /^2 Day Delivery/i})
+
 
 bot.dialog('GroundShipping', [function(session, resutlts){
     session.privateConversationData[ShippingStyleKey] = 'GroundShipping';
     session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
     " to " + session.privateConversationData[LocationKey]);
+
 
 }]).triggerAction({matches: /^Ground Shipping/i})
 
