@@ -58,7 +58,6 @@ bot.dialog('help', function(session){
                     // .tap(builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Space_Needle"))
                     .buttons([
                         builder.CardAction.imBack(session,'select', "select")])
-                        
             ]);
     
     session.send(msg);
@@ -130,3 +129,17 @@ bot.dialog('GroundShipping', [function(session, resutlts){
 
 
 }]).triggerAction({matches: /^Ground Shipping/i})
+
+bot.dialog('printlabel', function(session){
+    var picture = new builder.Message(session)
+            .textFormat(builder.TextFormat.xml)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("UPS")
+                    .subtitle("Shipping Label")
+                    .images([
+                        builder.CardImage.create(session, "http://www.cuspdental.com/img/UPSLabel.jpg")
+                    ])
+            ]);
+    session.send(picture);
+}).triggerAction({matches: /^printlabel/i})
