@@ -165,9 +165,27 @@ bot.dialog('2DayShipping', [function(session, resutlts){
 bot.dialog('GroundShipping', [function(session, resutlts){
     session.privateConversationData[ShippingStyleKey] = 'GroundShipping';
     session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
-    " to " + session.privateConversationData[LocationlsKey]);                   
+    " to " + session.privateConversationData[LocationKey]);                   
+     session.beginDialog('reship');
 }]).triggerAction({matches: /^Ground Shipping/i});
 
+bot.dialog('reship', [
+    function(session, results){
+        session.send('You got here!');
+        builder.Prompts.choice(session, 'Restart?', 'Yes|No', {listStyle:3})},
+    function (session, results) {
+            switch (results.response.index) {
+                case 0:
+                moveDialog("shipment", session);
+                    break;
+                case 1:
+                    session.endDialog();                    
+                    break;
+                default:
+                    session.endDialog();
+            }
+    }
+]).triggerAction({matches: /^reship/i});
 
 
 function validateAddress(string) {
@@ -175,4 +193,8 @@ function validateAddress(string) {
         return false;
     }
     return true;
+}
+
+function moveDialog(string, session) {
+    session.beginDialog(string);
 }
