@@ -133,6 +133,14 @@ bot.dialog('pickup', [
     function (session, result) {
         session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
         session.send('Your pickup time is: ' + session.conversationData.pickupTime);
+        builder.Prompts.text(session, 'Would you like to continue with your shipment?');
+    },
+    function (session, result) {
+        if (result.response === 'yes') {
+            session.beginDialog('shipment');
+        } else {
+            session.beginDialog('help');
+        }
     }
 ]).triggerAction({matches: /^pickup/i});
 
