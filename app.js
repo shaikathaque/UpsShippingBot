@@ -59,11 +59,11 @@ server.post('/api/messages', connector.listen());
 //=========================================================
 
 var model = process.env.model;
-var recognizer = new builder.LuisRecognizer('');
-var intents = new builder.IntentDialog({recognizers:[recognizer]});
 var LocationKey = "DefaultLocation";
 var ShippingStyleKey = "Shipping Style";
 var async = require("async");
+var recognizer = new builder.LuisRecognizer('https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/fd9a76fa-9d70-47e3-828c-33ef63fa039f?subscription-key=44f469a6bc1c4aa1bc5d2d98a7f02b11');
+
 
 
 bot.recognizer(recognizer);
@@ -72,7 +72,7 @@ bot.library(locationDialog.createLibrary("Ak2VZoOri8R263-z_IAqqGRcG55S3S5q71H9lS
 bot.dialog('start', function(session){
     session.send("Hi there!");
     session.beginDialog('rootMenu');
-}).triggerAction({matches: /^hello/i});
+}).triggerAction({matches: "Greetings"});
 
 bot.dialog('rootMenu', [
     function (session) {
@@ -142,7 +142,7 @@ bot.dialog('pickup', [
             session.beginDialog('help');
         }
     }
-]).triggerAction({matches: /^pickup/i});
+]).triggerAction({matches: "pickup"});
 
 bot.dialog('shipment', [
     function(session, results){
@@ -238,7 +238,7 @@ bot.dialog('dropoff', [function(session){
                                     break;
                                 }
                             }
-]).triggerAction({matches: /^dropoff/i});
+]).triggerAction({matches: "dropoff"});
 
 bot.dialog('quit', function(session){
     session.endConversation("Have a nice day.")
