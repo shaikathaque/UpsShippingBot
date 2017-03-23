@@ -106,7 +106,7 @@ bot.dialog('pickup', [
         if (result.response === 'yes') {
             session.beginDialog('shipment');
         } else {
-            session.send('pickup')
+            session.beginDialog('help');
         }
     }
 ]).triggerAction({matches: /^pickup/i});
