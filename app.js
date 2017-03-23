@@ -46,10 +46,10 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
   
 // Create chat bot
 var connector = new builder.ChatConnector({
-    // appId: process.env.MICROSOFT_APP_ID,
-    appId: null,
-    appPassword: null
-    // appPassword: process.env.MICROSOFT_APP_PASSWORD
+    appId: process.env.MICROSOFT_APP_ID,
+    // appId: null,
+    // appPassword: null
+    appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
@@ -68,6 +68,7 @@ var recognizer = new builder.LuisRecognizer('https://westus.api.cognitive.micros
 
 bot.recognizer(recognizer);
 bot.library(locationDialog.createLibrary("Ak2VZoOri8R263-z_IAqqGRcG55S3S5q71H9lSkCsU-1gjnHD1KRUkbeI-zLPp5O"));
+
 
 bot.dialog('start', function(session){
     session.send("Hi there!");
@@ -142,8 +143,12 @@ bot.dialog('pickup', [
             session.beginDialog('help');
         }
     }
-]).triggerAction({matches: "pickup"});
-
+]).triggerAction({
+    matches: 'pickup',
+    onInterrupted: function (session) {
+        session.send('Please provide an address.');
+    }
+});        
 bot.dialog('shipment', [
     function(session, results){
         builder.Prompts.text(session, prompts.shipToMessage);
@@ -151,7 +156,6 @@ bot.dialog('shipment', [
     function (session, results, next){
 
         session.privateConversationData[LocationKey] = results.response
-        session.send('You said your location is ' + session.privateConversationData[LocationKey]);
 
         builder.Prompts.choice(session, "Great. What shipping speed would you like?", '2 Day Delivery|Ground Shipping|Cancel',{listStyle:3});
         switch (results.response.index) {
@@ -172,7 +176,7 @@ bot.dialog('shipment', [
 var returnVals = [];
 // takes user address and find nearest location
 bot.dialog('dropoff', [function(session){
-    locationDialog.getLocation(session, {
+     var options = {
             prompt: "Please enter your address.",
             useNativeControl: true,
             reverseGeocode: true,
@@ -180,7 +184,7 @@ bot.dialog('dropoff', [function(session){
                 locationDialog.LocationRequiredFields.streetAddress |
                 locationDialog.LocationRequiredFields.locality |
                 locationDialog.LocationRequiredFields.postalCode 
-        });
+        };
 
         locationDialog.getLocation(session, options);
         },
@@ -238,53 +242,105 @@ bot.dialog('dropoff', [function(session){
                                     break;
                                 }
                             }
-]).triggerAction({matches: "dropoff"});
+]).triggerAction({
+    matches: 'dropoff',
+    onInterrupted: function (session) {
+        session.send('Please provide an address to find the closest UPS store.');
+    }
+}); 
 
 bot.dialog('quit', function(session){
     session.endConversation("Have a nice day.")
 }).triggerAction({matches: /^quit/i});
 
-bot.dialog('2DayShipping', [function(session, resutlts){
-    session.privateConversationData[ShippingStyleKey] = '2DayShipping';
-    session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
-    " to " + session.privateConversationData[LocationKey]);
-}]).triggerAction({matches: /^2 Day Delivery/i});
+bot.dialog('2DayShipping', [
+    function(session){
+        session.privateConversationData[ShippingStyleKey] = '2 Day Shipping';
+        var val= 'You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
+        " to " + session.privateConversationData[LocationKey]+ " is this correct?"
+        builder.Prompts.choice(session,val, "Yes|No", {listStyle:3})
+    },
+    function(session,results){
+        switch (results.response.index) {
+                case 0:
+                    var card = createLabel(session);
+                    var msg = new builder.Message(session).addAttachment(card);
+                    session.send(msg);
+                    session.beginDialog('reship');
+                    break;
+                case 1:
+                    session.send("Okay, lets start over.");
+                    session.endDialog();
+                    break;
+        }
+    }
+]).triggerAction({matches: /^2 Day Delivery/i});
 
-bot.dialog('GroundShipping', [function(session, resutlts){
-    session.privateConversationData[ShippingStyleKey] = 'GroundShipping';
-    session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
-    " to " + session.privateConversationData[LocationKey]);                   
-     session.beginDialog('reship');
-}]).triggerAction({matches: /^Ground Shipping/i});
+bot.dialog('GroundShipping', [
+        function(session){
+            session.privateConversationData[ShippingStyleKey] = 'Ground Shipping';
+            var val= 'You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
+            " to " + session.privateConversationData[LocationKey]+ " is this correct?"
+            builder.Prompts.choice(session,val, "Yes|No", {listStyle:3})
+        },
+        function(session,results){
+            switch (results.response.index) {
+                    case 0:
+                        session.send("Great! Here is your shipping label.");
+                        var card = createLabel(session);
+                        var msg = new builder.Message(session).addAttachment(card);
+                        session.send(msg);
+                        session.beginDialog('reship');
+                        break;
+                    case 1:
+                        session.send("Okay, lets start over.");
+                        session.beginDialog("help");
+                        break;
+                
+            }
+        }
+]).triggerAction({matches: /^Ground Shipping/i});
 
-bot.dialog('printlabel', function(session){
-    var picture = new builder.Message(session)
-            .textFormat(builder.TextFormat.xml)
-            .attachments([
-                new builder.HeroCard(session)
-                    .title("UPS")
-                    .subtitle("Shipping Label")
-                    .images([
-                        builder.CardImage.create(session, "http://www.cuspdental.com/img/UPSLabel.jpg")
-                    ])
-            ]);
-    session.send(picture);
-}).triggerAction({matches: /^printlabel/i})
+
+function createLabel(session){
+    return new builder.HeroCard(session)
+        .title("UPS")
+        .subtitle("Shipping Label")
+        .images([
+            builder.CardImage.create(session, "http://www.cuspdental.com/img/UPSLabel.jpg")
+        ])
+}
+// bot.dialog('printlabel', [function(session){
+//     var picture = new builder.Message(session)
+//             .textFormat(builder.TextFormat.xml)
+//             .attachments([
+//                 new builder.HeroCard(session)
+//                     .title("UPS")
+//                     .subtitle("Shipping Label")
+//                     .images([
+//                         builder.CardImage.create(session, "http://www.cuspdental.com/img/UPSLabel.jpg")
+//                     ])
+//             ]);
+//     session.send(picture);
+//     },
+//     function(session){
+//         session.beginDialog('reship');
+// }]).triggerAction({matches: /^printlabel/i})
 
 bot.dialog('reship', [
-    function(session, results){
-        session.send('You got here!');
-        builder.Prompts.choice(session, 'Restart?', 'Yes|No', {listStyle:3})},
+    function(session){
+        builder.Prompts.choice(session, 'Restart?', 'Yes|No', {listStyle:3})
+    },
     function (session, results) {
             switch (results.response.index) {
                 case 0:
-                moveDialog("help", session);
+                    session.beginDialog('rootMenu');
                     break;
                 case 1:
-                    session.endDialog();                    
+                    session.beginDialog('quit');                    
                     break;
                 default:
-                    session.endDialog();
+                    session.beginDialog('quit');   
             }
     }
 ]).triggerAction({matches: /^reship/i});
@@ -295,8 +351,4 @@ function validateAddress(string) {
         return false;
     }
     return true;
-}
-
-function moveDialog(string, session) {
-    session.beginDialog(string);
 }
