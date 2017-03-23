@@ -1,10 +1,15 @@
+
 var restify = require('restify');
 var builder = require('botbuilder');
 var prompts = require('./prompts');
 var locationDialog = require('botbuilder-location');
+
+
+var Client = require('node-rest-client').Client;
 //=========================================================
 // Bot Setup
 //=========================================================
+
 jsonObject = {
     "AccessRequest": {
                         "AccessLicenseNumber": "AD245999B2916A98", "UserId": "shaikathaque4",
@@ -32,20 +37,19 @@ jsonObject = {
         }
 };
 
+
 // Setup Restify Server
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
    console.log('%s listening to %s', server.name, server.url); 
 });
   
-var Client = require('node-rest-client').Client;
-
 // Create chat bot
 var connector = new builder.ChatConnector({
-    // appId: process.env.MICROSOFT_APP_ID,
-    appId: null,
-    appPassword: null
-    // appPassword: process.env.MICROSOFT_APP_PASSWORD
+    appId: process.env.MICROSOFT_APP_ID,
+    // appId: null,
+    // appPassword: null
+    appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
 var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
@@ -67,7 +71,7 @@ bot.library(locationDialog.createLibrary("Ak2VZoOri8R263-z_IAqqGRcG55S3S5q71H9lS
 
 bot.dialog('start', function(session){
     session.send("Hi there!");
-    session.beginDialog('shipment');
+    session.beginDialog('rootMenu');
 }).triggerAction({matches: /^hello/i});
 
 bot.dialog('rootMenu', [
@@ -112,13 +116,25 @@ bot.dialog('help', [
     }
 }]).triggerAction({matches: /^help/i});
 
-bot.dialog('pickup', function(session){
-    session.send("HERE");
-}).triggerAction({matches : /^pickup/i});
-
-bot.dialog('quit', function(session){
-    session.endConversation("Have a nice day.")
-}).triggerAction({matches: /^quit/i});
+bot.dialog('pickup', [
+    function (session) {
+        builder.Prompts.text(session, prompts.pickupAddressMessage);
+    },
+    function (session, result) {
+        if (validateAddress(result.response)) {
+            session.conversationData.pickupAddress = result.response;
+            session.send('Your address is: ' + session.conversationData.pickupAddress);
+            builder.Prompts.time(session, prompts.pickupTimeMessage);
+        } else {
+            session.send('Your address is not valid. Please try again');
+            session.beginDialog('pickup');
+        }
+    },
+    function (session, result) {
+        session.conversationData.pickupTime = builder.EntityRecognizer.resolveTime([result.response]);
+        session.send('Your pickup time is: ' + session.conversationData.pickupTime);
+    }
+]).triggerAction({matches: /^pickup/i});
 
 bot.dialog('shipment', [
     function(session, results){
@@ -216,11 +232,59 @@ bot.dialog('dropoff', [function(session){
                             }
 ]).triggerAction({matches: /^dropoff/i});
 
- 
-bot.dialog('chooseLocation', [function(session, results){
-    
-}]).triggerAction({matches: /^choose/i});
 
+bot.dialog('quit', function(session){
+    session.endConversation("Have a nice day.")
+}).triggerAction({matches: /^quit/i});
+
+// takes user address and find nearest location
+bot.dialog('dropoff', [function(session){
+    locationDialog.getLocation(session, {
+            prompt: "Enter your address",
+            useNativeControl: true,
+            reverseGeocode: true,
+            requiredFields:
+                locationDialog.LocationRequiredFields.streetAddress |
+                locationDialog.LocationRequiredFields.locality |
+                locationDialog.LocationRequiredFields.region |
+                locationDialog.LocationRequiredFields.postalCode |
+                locationDialog.LocationRequiredFields.country
+        });
+
+        locationDialog.getLocation(session, options);
+        },
+        function (session, results) {
+                if (results.response) {
+                    var place = results.response;
+                    session.send(place.streetAddress + ", " + place.locality + ", " + place.region + ", " + place.country + " (" + place.postalCode + ")");
+                }
+            }
+]).triggerAction({matches: /^dropoff/i});
+
+bot.dialog('shipment', [
+    function(session, results){
+        builder.Prompts.text(session, prompts.shipToMessage);
+    },
+    function (session, results, next){
+
+        session.privateConversationData[LocationKey] = results.response
+        session.send('You said your location is ' + session.privateConversationData[LocationKey]);
+
+        builder.Prompts.choice(session, "Great. What shipping speed would you like?", '2 Day Delivery|Ground Shipping|Cancel',{listStyle:3});
+        switch (results.response.index) {
+                case 0:
+                    session.beginDialog('2DayShipping');
+                    break;
+                case 1:
+                    session.beginDialog('Ground Shipping');
+                    break;
+                case 2:
+                    session.beginDialog('quit');
+                    break;
+                default:
+                    session.endDialog();
+                    break;
+}}]).triggerAction({matches: /^shipment/i});
 
 bot.dialog('2DayShipping', [function(session, resutlts){
     session.privateConversationData[ShippingStyleKey] = '2DayShipping';
@@ -231,8 +295,36 @@ bot.dialog('2DayShipping', [function(session, resutlts){
 bot.dialog('GroundShipping', [function(session, resutlts){
     session.privateConversationData[ShippingStyleKey] = 'GroundShipping';
     session.send('You said you would like to send this package using' + ' ' + session.privateConversationData[ShippingStyleKey] +
-    " to " + session.privateConversationData[LocationKey]);
-}]).triggerAction({matches: /^Ground Shipping/i})
- 
+    " to " + session.privateConversationData[LocationKey]);                   
+     session.beginDialog('reship');
+}]).triggerAction({matches: /^Ground Shipping/i});
+
+bot.dialog('reship', [
+    function(session, results){
+        session.send('You got here!');
+        builder.Prompts.choice(session, 'Restart?', 'Yes|No', {listStyle:3})},
+    function (session, results) {
+            switch (results.response.index) {
+                case 0:
+                moveDialog("shipment", session);
+                    break;
+                case 1:
+                    session.endDialog();                    
+                    break;
+                default:
+                    session.endDialog();
+            }
+    }
+]).triggerAction({matches: /^reship/i});
 
 
+function validateAddress(string) {
+    if (isNaN(string.split(' ')[0])) {
+        return false;
+    }
+    return true;
+}
+
+function moveDialog(string, session) {
+    session.beginDialog(string);
+}
